@@ -1,0 +1,83 @@
+#!/bin/bash
+
+echo "init system"
+if [[ -v ENABLE_SSH ]]; then
+    echo "=> ENABLE_SSH set to ${ENABLE_SSH}"
+    if [ ! -d /var/run/sshd ] ; then
+        echo "=> Configuring SSH"
+        mkdir /var/run/sshd
+        # SSH login fix. Otherwise user is kicked off after login
+        sed 's/PermitRootLogin without-password/PermitRootLogin yes/' -i /etc/ssh/sshd_config
+        sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+    fi
+    if [ ! -f ~/supervisord.ssh ] ; then
+        echo "=> Adding SSH to Supervisord"
+        touch ~/supervisord.ssh
+        echo "[program:sshd]" >> /etc/supervisor/supervisord.conf
+        echo "command=/usr/sbin/sshd -D -E /var/log/sshd.log" >>/etc/supervisor/supervisord.conf
+        echo "autostart=true" >>/etc/supervisor/supervisord.conf
+        echo "autorestart=true" >>/etc/supervisor/supervisord.conf
+        echo "redirect_stderr=true" >>/etc/supervisor/supervisord.conf
+        echo "stdout_logfile=/var/log/%(program_name)s.log" >>/etc/supervisor/supervisord.conf
+        echo "stdout_logfile_maxbytes=5MB" >>/etc/supervisor/supervisord.conf
+        echo "stdout_logfile_backups=0" >>/etc/supervisor/supervisord.conf
+        echo "stderr_logfile=/var/log/%(program_name)s.log" >>/etc/supervisor/supervisord.conf
+        echo "stderr_logfile_maxbytes=5MB" >>/etc/supervisor/supervisord.conf
+        echo "stderr_logfile_backups=0" >>/etc/supervisor/supervisord.conf
+        echo " " >>/etc/supervisor/supervisord.conf
+    fi
+fi
+
+if [[ -v ENABLE_APACHE ]]; then
+    echo "=> ENABLE_APACHE set to ${ENABLE_APACHE}"
+    VOLUME_HOME="/var/lib/mysql"
+    if [ ! -f ~/supervisord.apache ] ; then
+        echo "=> Adding Apache to Supervisord"
+        touch ~/supervisord.apache 
+        #sed -ri -e "s/^upload_max_filesize.*/upload_max_filesize = ${PHP_UPLOAD_MAX_FILESIZE}/" -e "s/^post_max_size.*/post_max_size = ${PHP_POST_MAX_SIZE}/" /etc/php5/apache2/php.ini
+        echo "ServerName localhost" >> /etc/apache2/apache2.conf
+        echo "[program:apache]" >> /etc/supervisor/supervisord.conf
+        echo "command=/bin/bash -c \"source /etc/apache2/envvars && exec /usr/sbin/apache2 -DFOREGROUND\"" >> /etc/supervisor/supervisord.conf
+        echo "autostart=true" >>/etc/supervisor/supervisord.conf
+        echo "autorestart=true" >>/etc/supervisor/supervisord.conf
+        echo "redirect_stderr=true" >>/etc/supervisor/supervisord.conf
+        echo "stdout_logfile=/var/log/%(program_name)s.log" >>/etc/supervisor/supervisord.conf
+        echo "stdout_logfile_maxbytes=5MB" >>/etc/supervisor/supervisord.conf
+        echo "stdout_logfile_backups=0" >>/etc/supervisor/supervisord.conf
+        echo "stderr_logfile=/var/log/%(program_name)s.log" >>/etc/supervisor/supervisord.conf
+        echo "stderr_logfile_maxbytes=5MB" >>/etc/supervisor/supervisord.conf
+        echo "stderr_logfile_backups=0" >>/etc/supervisor/supervisord.conf
+        echo " " >>/etc/supervisor/supervisord.conf
+    fi
+fi
+
+if [[ -v ENABLE_MYSQL ]]; then
+    echo "=> ENABLE_MYSQL set to ${ENABLE_MYSQL}"
+    if [ ! -f ~/supervisord.mysql ] ; then
+        echo "=> Adding MySQL to Supervisord"
+        touch ~/supervisord.mysql 
+        echo "[program:mysql]" >> /etc/supervisor/supervisord.conf
+        echo "command=exec mysqld_safe" >> /etc/supervisor/supervisord.conf
+        echo "autostart=true" >>/etc/supervisor/supervisord.conf
+        echo "autorestart=true" >>/etc/supervisor/supervisord.conf
+        echo "redirect_stderr=true" >>/etc/supervisor/supervisord.conf
+        echo "stdout_logfile=/var/log/%(program_name)s.log" >>/etc/supervisor/supervisord.conf
+        echo "stdout_logfile_maxbytes=5MB" >>/etc/supervisor/supervisord.conf
+        echo "stdout_logfile_backups=0" >>/etc/supervisor/supervisord.conf
+        echo "stderr_logfile=/var/log/%(program_name)s.log" >>/etc/supervisor/supervisord.conf
+        echo "stderr_logfile_maxbytes=5MB" >>/etc/supervisor/supervisord.conf
+        echo "stderr_logfile_backups=0" >>/etc/supervisor/supervisord.conf
+        echo " " >>/etc/supervisor/supervisord.conf
+    fi
+    if [[ ! -d $VOLUME_HOME/mysql ]]; then
+        echo "=> An empty or uninitialized MySQL volume $VOLUME_HOME"
+        echo "=> Installing MySQL ..."
+        mysql_install_db > /dev/null 2>&1
+        echo "=> Done!"  
+        /sbin/mysql_init && rm -Rf /sbin/mysql_init
+    fi
+fi
+
+echo "=> Starting Supervisor - the Process Control System"
+echo " "
+/usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
