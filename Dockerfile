@@ -1,17 +1,16 @@
 FROM ubuntu:trusty
 MAINTAINER Wayne Humphrey <wayne@humphrey.za.net>
-LABEL version="1.0"
+LABEL version="1.1"
 
-# Set the locale
+# Set system the locale
 RUN locale-gen en_US.UTF-8  
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
-ENV TERM xterm
-# Set the env variable DEBIAN_FRONTEND to noninteractive
+# Set some env variables as we mostly work in non interactive mode
 ENV DEBIAN_FRONTEND noninteractive
-
+ENV TERM xterm
 ENV NOTVISIBLE "in users profile"
 RUN echo "export VISIBLE=now" >> /etc/profile 
 
@@ -21,9 +20,9 @@ RUN apt-get install supervisor openssh-server -y -o Dpkg::Options::="--force-con
 
 # Add image init and supervisord config
 ADD init /sbin/init
-ADD mysql_init /sbin/mysql_init
+ADD init_user /sbin/init_user
 ADD supervisord.conf /etc/supervisor/supervisord.conf
-RUN chmod 755 /sbin/init /sbin/mysql_init
+RUN chmod 755 /sbin/init /sbin/init_user
 
 # Create and configure vagrant user
 # see https://hub.docker.com/r/fgrehm/vagrant-ubuntu/~/dockerfile/
@@ -34,10 +33,7 @@ RUN echo 'root:toor' | chpasswd
 # Enable passwordless sudo for users under the "sudo" group
 RUN sed 's/%sudo\s\+ALL=(ALL\(:ALL\)\?)\s\+ALL/%sudo ALL=NOPASSWD:ALL/g' -i /etc/sudoers
 
-#Environment variables to configure ssh
-#ENV ENABLE_SSH TRUE
-
-EXPOSE 9001
+EXPOSE 22 80 3306 9001
 
 # Use baseimage-docker's init system.
 CMD ["/sbin/init"]

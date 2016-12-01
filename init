@@ -74,7 +74,7 @@ if [[ -v ENABLE_MYSQL ]]; then
         echo "=> Installing MySQL ..."
         mysql_install_db > /dev/null 2>&1
         echo "=> Done!"  
-        /sbin/mysql_init && rm -Rf /sbin/mysql_init
+        /sbin/init_user && rm -Rf /sbin/init_user
     fi
 fi
 
