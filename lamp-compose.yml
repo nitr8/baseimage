@@ -1,0 +1,23 @@
+version: '2'
+services:
+#  linux:
+#    image: whumphrey/baseimage
+#    environment:
+#    - ENABLE_SSH=TRUE
+  apache:
+    image: "whumphrey/baseimage"
+    ports:
+      - 80:80
+#    depends_on:
+#      - mysql
+    environment:
+      - ENABLE_APACHE=TRUE
+#  mysql:
+#    image: "whumphrey/baseimage"
+#    ports:
+#      - 90:90
+#    environment:
+#     - ENABLE_MYSQL=TRUE
+#    links:
+#    - apache
+#    - mysql

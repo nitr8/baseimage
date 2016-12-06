@@ -19,9 +19,9 @@ RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold"
 RUN apt-get install supervisor openssh-server -y -o Dpkg::Options::="--force-confold"
 
 # Add image init and supervisord config
-ADD init /sbin/init
-ADD init_user /sbin/init_user
-ADD supervisord.conf /etc/supervisor/supervisord.conf
+ADD helper/init /sbin/init
+ADD helper/init_user /sbin/init_user
+ADD helper/supervisord.conf /etc/supervisor/supervisord.conf
 RUN chmod 755 /sbin/init /sbin/init_user
 
 # Create and configure vagrant user

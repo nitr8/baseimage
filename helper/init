@@ -30,7 +30,6 @@ fi
 
 if [[ -v ENABLE_APACHE ]]; then
     echo "=> ENABLE_APACHE set to ${ENABLE_APACHE}"
-    VOLUME_HOME="/var/lib/mysql"
     if [ ! -f ~/supervisord.apache ] ; then
         echo "=> Adding Apache to Supervisord"
         touch ~/supervisord.apache 
@@ -38,26 +37,27 @@ if [[ -v ENABLE_APACHE ]]; then
         echo "ServerName localhost" >> /etc/apache2/apache2.conf
         echo "[program:apache]" >> /etc/supervisor/supervisord.conf
         echo "command=/bin/bash -c \"source /etc/apache2/envvars && exec /usr/sbin/apache2 -DFOREGROUND\"" >> /etc/supervisor/supervisord.conf
-        echo "autostart=true" >>/etc/supervisor/supervisord.conf
-        echo "autorestart=true" >>/etc/supervisor/supervisord.conf
-        echo "redirect_stderr=true" >>/etc/supervisor/supervisord.conf
-        echo "stdout_logfile=/var/log/%(program_name)s.log" >>/etc/supervisor/supervisord.conf
-        echo "stdout_logfile_maxbytes=5MB" >>/etc/supervisor/supervisord.conf
-        echo "stdout_logfile_backups=0" >>/etc/supervisor/supervisord.conf
-        echo "stderr_logfile=/var/log/%(program_name)s.log" >>/etc/supervisor/supervisord.conf
-        echo "stderr_logfile_maxbytes=5MB" >>/etc/supervisor/supervisord.conf
-        echo "stderr_logfile_backups=0" >>/etc/supervisor/supervisord.conf
-        echo " " >>/etc/supervisor/supervisord.conf
+        echo "autostart=true" >> /etc/supervisor/supervisord.conf
+        echo "autorestart=true" >> /etc/supervisor/supervisord.conf
+        echo "redirect_stderr=true" >> /etc/supervisor/supervisord.conf
+        echo "stdout_logfile=/var/log/%(program_name)s.log" >> /etc/supervisor/supervisord.conf
+        echo "stdout_logfile_maxbytes=5MB" >> /etc/supervisor/supervisord.conf
+        echo "stdout_logfile_backups=0" >> /etc/supervisor/supervisord.conf
+        echo "stderr_logfile=/var/log/%(program_name)s.log" >> /etc/supervisor/supervisord.conf
+        echo "stderr_logfile_maxbytes=5MB" >> /etc/supervisor/supervisord.conf
+        echo "stderr_logfile_backups=0" >> /etc/supervisor/supervisord.conf
+        echo " " >> /etc/supervisor/supervisord.conf
     fi
 fi
 
 if [[ -v ENABLE_MYSQL ]]; then
     echo "=> ENABLE_MYSQL set to ${ENABLE_MYSQL}"
+    VOLUME_HOME="/var/lib/mysql"
     if [ ! -f ~/supervisord.mysql ] ; then
         echo "=> Adding MySQL to Supervisord"
         touch ~/supervisord.mysql 
         echo "[program:mysql]" >> /etc/supervisor/supervisord.conf
-        echo "command=exec mysqld_safe" >> /etc/supervisor/supervisord.conf
+        echo "command=/usr/local/bin/pidproxy /run/mysqld/mysqld.pid /bin/sh -c "exec /usr/bin/mysqld_safe > /dev/null 2>&1 &"" >> /etc/supervisor/supervisord.conf
         echo "autostart=true" >>/etc/supervisor/supervisord.conf
         echo "autorestart=true" >>/etc/supervisor/supervisord.conf
         echo "redirect_stderr=true" >>/etc/supervisor/supervisord.conf
